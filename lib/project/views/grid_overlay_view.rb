@@ -14,33 +14,15 @@ class Motion
 
         self.x_lines      = DEFAULTS[:x_lines]
         self.y_lines      = DEFAULTS[:y_lines]
-        self.stroke_color = DEFAULTS[:stroke_color]
-        self.stroke_width = DEFAULTS[:stroke_width]
+        @stroke_color = DEFAULTS[:stroke_color]
+        @stroke_width = DEFAULTS[:stroke_width]
       end
     end
 
     def toggle
-      if hidden?
-        show
-      else
-        hide
-      end
-    end
-
-    def show
-      self.stroke_color = @original_color
+      setHidden(!hidden?)
 
       setNeedsDisplay
-    end
-
-    def hide
-      unless hidden?
-        @original_color = stroke_color
-
-        self.stroke_color = UIColor.clearColor
-
-        setNeedsDisplay
-      end
     end
 
     def x_lines=(lines)
@@ -74,28 +56,32 @@ class Motion
 
       setup_drawing
 
-      draw_horizontal_lines
-      draw_vertical_lines
+      CGContextClearRect(context, bounds)
 
-      fill_path
+      unless hidden?
+        draw_horizontal_lines
+        draw_vertical_lines
+
+        fill_path
+      end
     end
 
     private
 
-    def hidden?
-      stroke_color == UIColor.clearColor
-    end
-
     def setup_drawing
-      CGContextSetStrokeColorWithColor(context, stroke_color.CGColor)
+      CGContextSetStrokeColorWithColor(context, stroke_color.colorWithAlphaComponent(0.5).CGColor)
 
       CGContextSetLineWidth(context, stroke_width)
     end
 
     def draw_horizontal_lines
+      draw_line([0, 0], [size.width, 0])
+
       (1..x_lines).each do |i|
         draw_line([0, y_interval * i], [size.width, y_interval * i])
       end
+
+      draw_line([0, size.height], [size.width, size.height])
     end
 
     def draw_vertical_lines
@@ -115,7 +101,7 @@ class Motion
     end
 
     def context
-      @_context ||= UIGraphicsGetCurrentContext()
+      @context ||= UIGraphicsGetCurrentContext()
     end
   end
 end
